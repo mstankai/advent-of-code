@@ -71,7 +71,7 @@ def part_2(records):
 
 # -----------------------------------------------
 def main():
-    input_path = './input/dec2_input.txt'
+    input_path = './dec2/input.txt'
     records = get_records(input_path)
     part_1(records)
     part_2(records)

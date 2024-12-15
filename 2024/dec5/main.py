@@ -126,7 +126,7 @@ def part_2(rules, updates):
 
 # -----------------------------------------------
 def main():
-    input_path = './input/dec5_input.txt'
+    input_path = './dec5/input.txt'
     text = get_input(input_path)
     rules, updates = process_text(text)
     good, bad = sort_updates(rules, updates)

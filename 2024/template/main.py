@@ -20,7 +20,7 @@ def part_2(text):
 
 # -----------------------------------------------
 def main():
-    input_path = './input/dec1_input.txt'
+    input_path = './dec1/input.txt'
     text = get_input(input_path)
     part_1(text)
     part_2(text)

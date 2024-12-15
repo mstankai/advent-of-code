@@ -1,6 +1,13 @@
 import numpy as np
-from dec3 import get_matches_and_idx
+import os
+import sys
 
+if os.getcwd() not in sys.path:
+    sys.path.append(os.getcwd())
+
+from dec3.main import get_matches_and_idx
+
+# -----------------------------------------------
 def get_input(input_path):
 
     with open(input_path, 'r') as f:
@@ -107,7 +114,7 @@ def part_2(text):
 
 # -----------------------------------------------
 def main():
-    input_path = './input/dec4_input.txt'
+    input_path = './dec4/input.txt'
     text = get_input(input_path)
     part_1(text)
     part_2(text)

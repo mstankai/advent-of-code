@@ -1,7 +1,7 @@
 import numpy as np 
 import pandas as pd
 
-input_path = './input/dec1_input.txt'
+input_path = './dec1/input.txt'
 
 l1, l2 = [], []
 with open(input_path, 'r') as f:
