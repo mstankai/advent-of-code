@@ -1,5 +1,4 @@
 import re
-import sys
 import numpy as np
 
 def get_input(input_path):

@@ -1,6 +1,4 @@
 import numpy as np
-import re
-import sys
 from dec3 import get_matches_and_idx
 
 def get_input(input_path):
