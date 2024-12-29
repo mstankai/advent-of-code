@@ -3,6 +3,8 @@ import numpy as np
 import os
 import time
 
+from concurrent.futures import ProcessPoolExecutor
+from tqdm import tqdm
 from dec6 import (
     Grid,
     Guard
@@ -38,8 +40,8 @@ def parse_grid(text):
 # -----------------------------------------------
 def part_1(text, animated):
 
-    grid_arr = parse_grid(text)
-    grid = Grid(grid_arr)
+    fresh_grid = parse_grid(text)
+    grid = Grid(fresh_grid)
     guard = Guard(grid)
 
     x, y = guard.get_position()
@@ -49,54 +51,74 @@ def part_1(text, animated):
             os.system('clear')
             print('\n',guard.grid.grid)
             time.sleep(0.2)
-        # print(guard.x, guard.y) 
         guard.move()
 
     n_pos = len(guard.visited)
     print(f"Part 1: Distinct locations visited = {n_pos}")
     
-    return guard.grid
+    return guard.grid.grid
 
 # -----------------------------------------------
-import sys
-def part_2(text, orig_grid):
 
-    grid_arr = parse_grid(text)
-    imax, jmax = grid_arr.shape
+def simulate_obstacle_run(args):
+    """
+    Worker function to:
+      1) Place an obstacle at (i, j).
+      2) Run the Guard simulation.
+      3) Return (j, i) if the guard is stuck, else None.
+    """
+    i, j, new_grid, completed_grid = args
+
+    # make new grid
+    nga = new_grid.copy()
+    nga[i][j] = '#'
+    ng = Grid(nga)
+
+    # run guard test
+    guard = Guard(ng)
+    while guard.in_grid and (not guard.is_stuck):
+        guard.move()            
+    
+    if guard.is_stuck:
+        return (j,i)
+    
+    return None
+
+# -----------------------------------------------
+def part_2(text, completed_grid):
+
+    fresh_grid = parse_grid(text)
+    imax, jmax = fresh_grid.shape
 
     print('\nRunning part 2:')
- 
-    stuck_pos = set()
+    start_time = time.time()
+
+    tasks = []
     for i in range(imax):
-
-        if i % 10 == 0:
-            print(f'  >> Testing obs. on row {i}/{imax}...')
-
-        if i == 9: # temporary break for timing
-            break
-
         for j in range(jmax):
-            if orig_grid.grid[i][j] != 'X':
-                continue
-            if (grid_arr[i][j] != '.') :
-                continue
-        
-           # make new grid
-            nga = grid_arr.copy()
-            nga[i][j] = '#'
-            ng = Grid(nga)
+            if (completed_grid[i][j] == 'X') and (fresh_grid[i][j] == '.'):
+                tasks.append((i, j, fresh_grid, completed_grid))
 
-            # run guard test
-            guard = Guard(ng)
-            while guard.in_grid and (not guard.is_stuck):
-                guard.move()            
-            if guard.is_stuck:
-                stuck_pos.add((j,i))
+    stuck_pos = set()
 
-    # print(stuck_pos)
+    with ProcessPoolExecutor() as executor:
+        results = list(
+            tqdm(
+                executor.map(simulate_obstacle_run, tasks),
+                total=len(tasks),
+                desc=("Processing...")
+            )
+        )
+
+        for r in results:
+            if r is not None:
+                stuck_pos.add(r)
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Completed in {elapsed_time:.3f} seconds\n")
     print(f"Part 2: Number of obstacle positions = {len(stuck_pos)}")
 
-    return 
 
 # -----------------------------------------------
 def main(a):
@@ -118,5 +140,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    
     main(args.a)

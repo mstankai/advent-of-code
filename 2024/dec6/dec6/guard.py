@@ -101,9 +101,3 @@ class Guard:
         self.dir = turns[self.dir]
         return
     
-    
-
-
-
-
-    
