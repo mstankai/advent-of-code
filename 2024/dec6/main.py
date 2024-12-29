@@ -72,12 +72,15 @@ def part_2(text, orig_grid):
         if i % 10 == 0:
             print(f'  >> Testing obs. on row {i}/{imax}...')
 
+        if i == 9: # temporary break for timing
+            break
+
         for j in range(jmax):
             if orig_grid.grid[i][j] != 'X':
                 continue
             if (grid_arr[i][j] != '.') :
                 continue
-
+        
            # make new grid
             nga = grid_arr.copy()
             nga[i][j] = '#'
@@ -90,6 +93,7 @@ def part_2(text, orig_grid):
             if guard.is_stuck:
                 stuck_pos.add((j,i))
 
+    # print(stuck_pos)
     print(f"Part 2: Number of obstacle positions = {len(stuck_pos)}")
 
     return 

@@ -51,38 +51,38 @@ class Guard:
             self.visited.append((self.x, self.y))
 
     def move(self):
-        if (not self.in_grid):
-            print("Guard.move(): guard not on grid, no more moves.")
-            return
-        if self.is_stuck:
-            print("Guard.move(): guard is stuck, no more moves.")
-            return
 
-        dx, dy = self.get_move()
-        x = self.x + dx
-        y = self.y + dy
+        moved = False
+        while not moved:
+            
+            dx, dy = self.get_move()
+            nx, ny = self.x + dx, self.y + dy
  
-        if (x,y) in self.grid.obstacles:
-            # print('Turning!: x,y = ',x,y)
-            self.turn()
-            self.move()
-            return
+            if (nx,ny) in self.grid.obstacles:
+                self.turn()
+                continue
 
-        self.x = x
-        self.y = y
-        self.n_moves += 1
+            self.grid.update_guard(nx, ny, self.dir)
 
-        self.grid.update_guard(x,y,self.dir)
+            if not self.grid.in_grid(nx, ny):
+                self.in_grid = False
+                return
 
-        self.set_in_grid()
-        if not self.in_grid:
-            return         
-        
-        self.log_visited()
-        self.log_move()
+            self.x, self.y = nx, ny
+            self.n_moves += 1
+            
+            self.log_visited()
+            self.log_move()
 
-        self.set_is_stuck()
+            is_stuck = (
+                ( (self.x, self.y, self.dir) in self.moves )
+                and ( self.moves[(self.x, self.y, self.dir)] > 1 )
+            )
 
+            if is_stuck:
+                self.is_stuck = True
+
+            moved = True
 
     def set_dir(self, new_dir):
         ok_dirs = self.move_map.keys()
@@ -90,16 +90,6 @@ class Guard:
             self.dir = new_dir
         else:
             raise ValueError(f"Invalid direction: {new_dir}, must be one of {ok_dirs}")
-
-    def set_in_grid(self):
-        self.in_grid = self.grid.in_grid(self.x, self.y)
-
-    def set_is_stuck(self):
-        if not self.in_grid: 
-            self.is_stuck = False
-        k =  (self.x, self.y, self.dir)
-        v = self.moves[k]
-        self.is_stuck = (v > 1)
 
     def turn(self):
         turns = {
