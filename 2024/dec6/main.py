@@ -1,10 +1,14 @@
 import argparse
 import numpy as np
-import sys
+import os
+import time
+
 from dec6 import (
     Grid,
     Guard
 )
+
+# -----------------------------------------------
 def get_input(input_path):
 
     with open(input_path, 'r') as f:
@@ -27,7 +31,7 @@ def get_input(input_path):
 
 # -----------------------------------------------
 def parse_grid(text):
-    lines = text.strip().replace(' ','').split("\n")
+    lines = text.strip().replace(' ','').splitlines()
     grid = [list(l) for l in lines]
     return np.array(grid)
 
@@ -42,21 +46,26 @@ def part_1(text, animated):
 
     while guard.in_grid:
         if animated:
+            os.system('clear')
             print('\n',guard.grid.grid)
+            time.sleep(0.2)
+        # print(guard.x, guard.y) 
         guard.move()
 
-    n_pos = len(guard.get_visited())
+    n_pos = len(guard.visited)
     print(f"Part 1: Distinct locations visited = {n_pos}")
+    
+    return guard.grid
 
-    # return
 # -----------------------------------------------
-def part_2(text):
+import sys
+def part_2(text, orig_grid):
 
     grid_arr = parse_grid(text)
     imax, jmax = grid_arr.shape
 
     print('\nRunning part 2:')
-
+ 
     stuck_pos = set()
     for i in range(imax):
 
@@ -64,24 +73,22 @@ def part_2(text):
             print(f'  >> Testing obs. on row {i}/{imax}...')
 
         for j in range(jmax):
-
-            if grid_arr[i][j] != '.':
+            if orig_grid.grid[i][j] != 'X':
+                continue
+            if (grid_arr[i][j] != '.') :
                 continue
 
-            # make new grid
+           # make new grid
             nga = grid_arr.copy()
             nga[i][j] = '#'
             ng = Grid(nga)
 
             # run guard test
             guard = Guard(ng)
-            
-            while (not guard.is_stuck) and guard.in_grid:
-                guard.move()
-            
+            while guard.in_grid and (not guard.is_stuck):
+                guard.move()            
             if guard.is_stuck:
                 stuck_pos.add((j,i))
-                # print(f'Found stuck position at {(j,i)}!') 
 
     print(f"Part 2: Number of obstacle positions = {len(stuck_pos)}")
 
@@ -92,8 +99,8 @@ def main(a):
     input_path = './dec6/input.txt'
     text = get_input(input_path)
 
-    part_1(text, a)
-    part_2(text)
+    completed_grid = part_1(text, a)
+    part_2(text, completed_grid)
 
 # -----------------------------------------------
 if __name__ == "__main__":
