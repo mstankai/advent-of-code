@@ -33,6 +33,9 @@ class Grid:
             self.grid[iy][ix] = 'X'
             self.guard = (x, y)
         
+        if not self.in_grid(x,y):
+            return
+        
         leg = {
             'N' : '^',
             'E' : '>',
