@@ -1,6 +1,4 @@
-# import re
-# import sys
-# import numpy as np
+from dataclasses import dataclass
 
 # -----------------------------------------------
 def get_input(input_path):
@@ -72,26 +70,30 @@ def part_1(text):
 # PART 2
 # we treat files and spaces as items (new class)
 
+@dataclass
 class Item:
-    def __init__(self, pos:int, fid: int, l: int):
-        self.pos = pos 
-        self.fid = fid
-        self.size = l
-        self.is_file = (fid >= 0)
-    
-    def __str__(self):
-        ftype = 'F' if self.is_file else 'S'
-        return f"[{ftype}] Pos {self.pos}, ID: {self.fid}, size: {self.size}"
+    pos: int
+    fid: int
+    size: int
+
+    @property 
+    def is_file(self):
+        return self.fid >= 0
+
+    @property
+    def end(self):
+        return self.pos + self.size
         
     def viz(self):
         if self.is_file:
             return str(self.fid)*self.size
         else:
             return '.'*self.size
-    
-    @property
-    def end(self):
-        return self.pos + self.size
+        
+    def __str__(self):
+        ftype = 'F' if self.is_file else 'S'
+        return f"[{ftype}] Pos {self.pos}, ID: {self.fid}, size: {self.size}"
+
 
 # -------
 def get_map_p2(text: str):
@@ -120,23 +122,17 @@ def item_pos_sort(m, desc=False):
     return sorted(m, key=sort_key, reverse=desc)
 
 # -------
-def sort_and_join_adjacent_spaces(slist):
-    if any(item.is_file for item in slist):
+def merge_spaces(spaces):
+    if any(s.is_file for s in spaces):
         raise ValueError("Not all spaces!")
-    # sort
-    slist = item_pos_sort(slist)
-    # join adjacent
-    i = 1
-    while i < len(slist):
-        prev = slist[i-1]
-        curr = slist[i]
-        if (prev.pos + prev.size) == curr.pos:
-            slist[i].pos = prev.pos
-            slist[i].size = prev.size + curr.size
-            slist.pop(i-1)
+    spaces = item_pos_sort(spaces)
+    merged = []
+    for s in spaces:
+        if merged and merged[-1].end == s.pos:
+            merged[-1].size += s.size
         else:
-            i += 1
-    return slist
+            merged.append(s)
+    return merged
 
 # -------
 def get_item_checksum(m):
@@ -151,8 +147,11 @@ def get_item_checksum(m):
         cs += sum(vals)
     return cs
 
-
+# -------
 def part_2(text):
+    # could be improved by not doing a full list sort+merge
+    # but just addressing adjacent and putting space into place
+    # but it works as is
 
     m = get_map_p2(text)
     # print_map2(m)
@@ -187,7 +186,7 @@ def part_2(text):
                     spaces.append(new_space)
 
                 # order and merge spaces
-                spaces = sort_and_join_adjacent_spaces(spaces)
+                spaces = merge_spaces(spaces)
 
                 # # check sort
                 # new_map = item_pos_sort(files + spaces)
@@ -207,7 +206,7 @@ def main():
     input_path = './dec9/input.txt'
     text = get_input(input_path)
 
-    # part_1(text)
+    part_1(text)
     part_2(text)
 
 # -----------------------------------------------
