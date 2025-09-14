@@ -43,4 +43,4 @@ for n, fq in l1_fqs.items():
     if n not in l2_fqs: continue
     sim_score += (n * fq * l2_fqs[n])
 
-print(f"Part 1: similarity score = {sim_score}")
+print(f"Part 2: similarity score = {sim_score}")

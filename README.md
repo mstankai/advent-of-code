@@ -15,7 +15,7 @@ This year, I am solving the challenges using Python.
 ```
 /advent-of-code
     ├── 2024
-    │   ├── 1
+    │   ├── dec1
     │   │  ├── main.txt
     │   │  ├── input.txt
     |   |  └── ...
@@ -30,7 +30,7 @@ To run a solution, go to the folder for the year, and run the corresponding scri
 
 ```sh
 cd 2024
-python 1/main.py
+python dec1/main.py
 ```
 
 ## License
