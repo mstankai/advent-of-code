@@ -1,25 +1,6 @@
-import re
-import sys
-import numpy as np
-
-# -----------------------------------------------
-class Item:
-    def __init__(self, fid: int, l: int):
-        self.fid = fid
-        self.len = l
-        self.is_file = (fid >= 0)
-
-    def __str__(self):
-        if self.is_file:
-            return f"File - ID: {self.fid}, size: {self.len}"
-        else:
-            return f"Space - size: {self.len}"
-        
-    def viz(self):
-        if self.is_file:
-            return str(self.fid)*self.len
-        else:
-            return '.'*self.len
+# import re
+# import sys
+# import numpy as np
 
 # -----------------------------------------------
 def get_input(input_path):
@@ -33,6 +14,9 @@ def get_input(input_path):
 
 
 # -----------------------------------------------
+# PART 1
+# we treat the map as a list with numbers and spaces ('.')
+
 def get_map_p1(text: str):
 
     filemap = []
@@ -49,24 +33,7 @@ def get_map_p1(text: str):
     
     return filemap
 
-# -----------------------------------------------
-def get_map_p2(text: str):
-
-    filemap = []
-
-    for i, c in enumerate(text):
-        idx = i // 2
-        is_file = (i % 2 == 0)
-        l = int(c)
-
-        if is_file:
-            filemap.append(Item(idx, l))
-        else :
-            filemap.append(Item(-1,l))
-    
-    return filemap
-
-# -----------------------------------------------
+# -------
 def part_1(text):
 
     m = get_map_p1(text)
@@ -102,62 +69,137 @@ def part_1(text):
     print(f"Part 1, checksum: {cs}")
 
 # -----------------------------------------------
+# PART 2
+# we treat files and spaces as items (new class)
+
+class Item:
+    def __init__(self, pos:int, fid: int, l: int):
+        self.pos = pos 
+        self.fid = fid
+        self.size = l
+        self.is_file = (fid >= 0)
+    
+    def __str__(self):
+        ftype = 'F' if self.is_file else 'S'
+        return f"[{ftype}] Pos {self.pos}, ID: {self.fid}, size: {self.size}"
+        
+    def viz(self):
+        if self.is_file:
+            return str(self.fid)*self.size
+        else:
+            return '.'*self.size
+    
+    @property
+    def end(self):
+        return self.pos + self.size
+
+# -------
+def get_map_p2(text: str):
+    filemap = []
+    pos = 0
+    for i, c in enumerate(text):
+        idx = i // 2
+        is_file = (i % 2 == 0)
+        l = int(c)
+        if l == 0: continue
+        if is_file:
+            filemap.append(Item(pos, idx, l))
+        else :
+            filemap.append(Item(pos, -1,l))
+        pos += l
+    return filemap
+
+# -------
 def print_map2(m):
     mp = [i.viz() for i in m]
     print(" ".join(mp))
-# -----------------------------------------------
+
+# -------
+def item_pos_sort(m, desc=False):
+    sort_key = (lambda x: x.pos)
+    return sorted(m, key=sort_key, reverse=desc)
+
+# -------
+def sort_and_join_adjacent_spaces(slist):
+    if any(item.is_file for item in slist):
+        raise ValueError("Not all spaces!")
+    # sort
+    slist = item_pos_sort(slist)
+    # join adjacent
+    i = 1
+    while i < len(slist):
+        prev = slist[i-1]
+        curr = slist[i]
+        if (prev.pos + prev.size) == curr.pos:
+            slist[i].pos = prev.pos
+            slist[i].size = prev.size + curr.size
+            slist.pop(i-1)
+        else:
+            i += 1
+    return slist
+
+# -------
+def get_item_checksum(m):
+    cs = 0
+    for item in m:
+        if not item.is_file: continue
+        # id * pos for each space file takes up
+        vals = [
+            (item.pos+i) * item.fid 
+            for i in range(item.size)
+        ]
+        cs += sum(vals)
+    return cs
+
+
 def part_2(text):
 
-    print("Input: ",text)
     m = get_map_p2(text)
+    # print_map2(m)
 
-    # --- rearrange files ---
-    m_orig = m.copy()
+    files = [f for f in m if f.is_file]
+    spaces = [s for s in m if not s.is_file]
 
-    j = len(m) - 1
-    jm = len(m) - 1
+    # loop over reversed files  
+    files = item_pos_sort(files, desc=True) 
+    for f in files:
 
-    while j > 0:
-        b = m_orig[j]
+        # check if it can fit in any of the spaces
+        for s in spaces:
+            if s.pos > f.pos: break
 
-        if not b.is_file: 
-            j -= 1
-            jm -= 1
-            continue
+            diff = s.size - f.size
+            if diff >= 0:
+                
+                # move file forward
+                file_pos = f.pos
+                f.pos = s.pos
 
-        i = 0
-        while i <= j: 
-            f = m[i]
-            if (f.is_file) or (f.len < b.len):
-                i += 1
-                continue
+                # move space back
+                s.pos = file_pos
+                s.size = f.size
 
-            # --- move file ---
-            print_map2(m)
+                # if space was larger than file create a new space
+                # and add in the same place in space list
+                if diff > 0:
+                    npos = f.end
+                    new_space = Item(npos, -1, diff)
+                    spaces.append(new_space)
 
-            print("f: ", f)
-            print("b: ", b)
-            print("i,j,jm: ",i,j,jm)
+                # order and merge spaces
+                spaces = sort_and_join_adjacent_spaces(spaces)
 
-            m[jm] = Item(-1, b.len) # make space
-            
-            diff = f.len - b.len
-            if diff == 0:
-                m[i] = b
-            else:
-                m[i:i+1] = [b, Item(-1, diff)]
-                jm += 1
-            
-            j-=1
-            jm-=1
+                # # check sort
+                # new_map = item_pos_sort(files + spaces)
+                # print_map2(new_map)
 
-            print_map2(m)
-            print("-----------")
-            break
+                # stop searching                    
+                break
 
-        j-=1
-        jm-=1
-    # print(f"Part 2: {total}")
+    new_map = item_pos_sort(files + spaces)
+    cs = get_item_checksum(new_map)
+
+    print(f"Part 2, checksum: {cs}")
     return
 
 # -----------------------------------------------
